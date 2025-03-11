@@ -71,8 +71,8 @@ while running:
             py_coord = init_y + px * ratio + ratio // 2
             pygame.draw.rect(screen, red, (px_coord, py_coord, ratio // 2, ratio // 2))
 
-    draw_button(screen, "Tạo mê cung", create_button_rect)
-    draw_button(screen, "Giải mê cung", solve_button_rect)
+    draw_button(screen, "Create maze", create_button_rect)
+    draw_button(screen, "Solve maze", solve_button_rect)
 
     pygame.display.flip()
 
