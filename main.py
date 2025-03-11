@@ -1,60 +1,115 @@
-# main.py
+import pygame
+import sys
+from kruskal_maze import KruskalMaze
 
-import pygame  # Import the pygame library for visualization
-import sys  # Import sys for exiting the program
-from kruskal_maze import KruskalMaze  # Import the KruskalMaze class for generating the maze
-
-# Movement directions for visualization (down and right)
-dx = [1, 0]
-dy = [0, 1]
-
-# Define the size of the maze grid
-rows, cols = 30, 30
-
-# Create a KruskalMaze instance with the specified number of rows and columns
-kruskal_maze = KruskalMaze(rows, cols)
-
-# Generate the maze using Kruskal's algorithm and get the minimum spanning tree (MST)
-mst = kruskal_maze.generate_maze()
-
-# Visualize the MST and get the required grid and edge states for rendering
-list_mst, check_list = kruskal_maze.visualize_maze(mst)
-
-# Initialize pygame for visualization
 pygame.init()
+pygame.font.init()
 
-# Define the screen size for rendering the maze
+dx = [0, 1, 0, -1]
+dy = [1, 0, -1, 0]
+
+def dfs(maze, start, end, path=[]):
+    x, y = start
+    if start == end:
+        return path + [start]
+
+    for direction in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
+        new_x, new_y = x + direction[0], y + direction[1]
+        if (new_x, new_y) in maze and maze[(new_x, new_y)] is True and (new_x, new_y) not in path:
+            new_path = dfs(maze, (new_x, new_y), end, path + [start])
+            if new_path:
+                return new_path
+
+    return None
+
+def draw_button(screen, text, rect, color=(0, 200, 0)):
+    pygame.draw.rect(screen, color, rect)
+    font = pygame.font.SysFont(None, 36)
+    text_surface = font.render(text, True, (255, 255, 255))
+    text_rect = text_surface.get_rect(center=rect.center)
+    screen.blit(text_surface, text_rect)
+
+def is_button_clicked(rect, pos):
+    return rect.collidepoint(pos)
+
 width, height = 800, 800
-screen = pygame.display.set_mode((width, height))  # Create a display window
-pygame.display.set_caption("Maze Visualization")  # Set the window title
-screen.fill((28, 28, 28))  # Fill the background with a dark color
+screen = pygame.display.set_mode((width, height))
+pygame.display.set_caption("Maze Visualization")
+screen.fill((28, 28, 28))
 
-# Define the color for drawing the maze
 white = (255, 255, 255)
+red = (255, 0, 0)
 
-# Set the spacing ratio between grid points
+rows, cols = 30, 30
 ratio = 20
-
-# Set the initial offset for drawing the maze
 init_x, init_y = 50, 50
 
-# Draw the maze grid based on the MST data
-for i in range(rows + 1):  # Loop through all rows in the grid
-    for j in range(cols + 1):  # Loop through all columns in the grid
-        x, y = init_x + j * ratio, init_y + i * ratio  # Calculate the coordinates of the current point
-        for k in range(2):  # Loop through movement directions (right and down)
-            new_x = i + dx[k]
-            new_y = j + dy[k]
-            # Check if the edge exists in the MST and draw the line if necessary
-            if 0 <= new_x <= rows and 0 <= new_y <= cols and list_mst.get((i, j, new_x, new_y), True):
-                pygame.draw.line(screen, white, (x, y), (init_x + new_y * ratio, init_y + new_x * ratio), 2)
+kruskal_maze = KruskalMaze(rows, cols)
+mst = kruskal_maze.generate_maze()
+list_mst, check_list = kruskal_maze.visualize_maze(mst)
 
-# Update the display to show the drawn maze
-pygame.display.flip()
+create_button_rect = pygame.Rect(50, 10, 150, 40)
+solve_button_rect = pygame.Rect(220, 10, 150, 40)
 
-# Main event loop to keep the pygame window open
-while True:
-    for event in pygame.event.get():  # Process events
-        if event.type == pygame.QUIT:  # If the user closes the window
-            pygame.quit()  # Quit pygame
-            sys.exit()  # Exit the program
+running = True
+solving_path = []
+while running:
+    screen.fill((28, 28, 28))
+
+    for i in range(rows + 1):
+        for j in range(cols + 1):
+            x, y = init_x + j * ratio, init_y + i * ratio
+            for k in range(2):
+                new_x = i + dx[k]
+                new_y = j + dy[k]
+                if 0 <= new_x <= rows and 0 <= new_y <= cols and list_mst.get((i, j, new_x, new_y), True):
+                    pygame.draw.line(screen, white, (x, y), (init_x + new_y * ratio, init_y + new_x * ratio), 2)
+
+    if solving_path:
+        for (px, py) in solving_path:
+            px_coord = init_x + py * ratio + ratio // 2
+            py_coord = init_y + px * ratio + ratio // 2
+            pygame.draw.rect(screen, red, (px_coord, py_coord, ratio // 2, ratio // 2))
+
+    draw_button(screen, "Tạo mê cung", create_button_rect)
+    draw_button(screen, "Giải mê cung", solve_button_rect)
+
+    pygame.display.flip()
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                if is_button_clicked(create_button_rect, event.pos):
+                    kruskal_maze = KruskalMaze(rows, cols)
+                    mst = kruskal_maze.generate_maze()
+                    list_mst, check_list = kruskal_maze.visualize_maze(mst) # Cập nhật check_list
+                    solving_path = []
+                elif is_button_clicked(solve_button_rect, event.pos):
+                    start = (0, 0)
+                    end = (rows - 1, cols - 1)
+                    solving_path = dfs(check_list, start, end)
+
+                    if solving_path:
+                        for (step_x, step_y) in solving_path:
+                            pygame.time.delay(200)
+                            screen.fill((28, 28, 28))
+                            for i in range(rows + 1):
+                                for j in range(cols + 1):
+                                    x, y = init_x + j * ratio, init_y + i * ratio
+                                    for k in range(2):
+                                        new_x = i + dx[k]
+                                        new_y = j + dy[k]
+                                        if 0 <= new_x <= rows and 0 <= new_y <= cols and list_mst.get(
+                                                (i, j, new_x, new_y), True):
+                                            pygame.draw.line(screen, white, (x, y),
+                                                             (init_x + new_y * ratio, init_y + new_x * ratio), 2)
+
+                            current_px = init_x + step_y * ratio + ratio // 2
+                            current_py = init_y + step_x * ratio + ratio // 2
+                            pygame.draw.rect(screen, red, (current_px, current_py, ratio // 2, ratio // 2))
+                            pygame.display.flip()
+
+pygame.quit()
+sys.exit()
