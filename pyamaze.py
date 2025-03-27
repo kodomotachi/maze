@@ -4,7 +4,7 @@ from tkinter import *
 from enum import Enum
 from collections import deque
 
-
+'''Edit the color of agent, and path'''
 class COLOR(Enum):
     '''
     This class is created to use the Tkinter colors easily.
@@ -25,7 +25,7 @@ class COLOR(Enum):
     blue = ('DeepSkyBlue4', 'DeepSkyBlue2')
     yellow = ('yellow2', 'yellow2')
 
-
+'''Create an object for user to control moving in a maze'''
 class agent:
     '''
     The agents can be placed on the maze.
@@ -149,9 +149,11 @@ class agent:
                         pass
                     o = self._orient % 4
                     if o == 1:
+                        '''Rotate clock wise'''
                         self._RCW()
                         self._orient -= 1
                     elif o == 3:
+                        '''Rotate counter clock wise'''
                         self._RCCW()
                         self._orient += 1
                     elif o == 2:
@@ -228,20 +230,23 @@ class agent:
         self._coord = (*p1, *p2)
         self._parentMaze._canvas.coords(self._head, *self._coord)
         self._orient = (self._orient + 1) % 4
-
+    '''agent move right'''
     def moveRight(self, event):
         if self._parentMaze.maze_map[self.x, self.y]['E'] == True:
             self.y = self.y + 1
 
+    '''agent move left'''
     def moveLeft(self, event):
         if self._parentMaze.maze_map[self.x, self.y]['W'] == True:
             self.y = self.y - 1
 
+    '''agent move up'''
     def moveUp(self, event):
         if self._parentMaze.maze_map[self.x, self.y]['N'] == True:
             self.x = self.x - 1
             self.y = self.y
 
+    '''agent move down'''
     def moveDown(self, event):
         if self._parentMaze.maze_map[self.x, self.y]['S'] == True:
             self.x = self.x + 1
@@ -288,7 +293,7 @@ class maze:
     This is the main class to create maze.
     '''
 
-    def __init__(self, rows=10, cols=10):
+    def __init__(self, rows=5, cols=5):
         '''
         rows--> No. of rows of the maze
         cols--> No. of columns of the maze
@@ -921,7 +926,7 @@ class maze:
 
         self._win.after(delay, self._tracePathSingle, a, p, kill, showMarked, delay)
 
-    def tracePath(self, d, kill=False, delay=300, showMarked=False):
+    def tracePath(self, d, kill=True, delay=300, showMarked=False):
         '''
         A method to trace path by agent
         You can provide more than one agent/path details
