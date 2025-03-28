@@ -1,2 +1,4 @@
-testing.cpp
-.vscode
+tempCodeRunnerFile.py
+__pycache__/
+dfs.csv
+maze_previous/
